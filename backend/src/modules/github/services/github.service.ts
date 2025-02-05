@@ -1,87 +1,72 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { GithubRepository } from '../interfaces/github-repository.interface';
 
 @Injectable()
-export class GithubService {
-  private readonly apiUrl: string;
-  private readonly accessToken: string;
+export class GithubService implements OnModuleInit {
+  private readonly logger = new Logger(GithubService.name);
+  private readonly baseUrl: string;
+  private readonly token: string | undefined;
 
   constructor(
     private readonly configService: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
-    const apiUrl = this.configService.get<string>('github.apiUrl');
-    const accessToken = this.configService.get<string>('github.accessToken');
-
-    if (!apiUrl || !accessToken) {
-      throw new Error('Missing required GitHub configuration');
+    const baseUrl = this.configService.get<string>('github.apiUrl');
+    if (!baseUrl) {
+      throw new Error('GitHub API URL is required but not configured');
     }
-
-    this.apiUrl = apiUrl;
-    this.accessToken = accessToken;
+    this.baseUrl = baseUrl;
+    this.token = this.configService.get<string>('github.token');
   }
 
-  async getRepositories(username: string): Promise<GithubRepository[]> {
+  async onModuleInit() {
+    this.logger.log(`Initialized with API URL: ${this.baseUrl}`);
+    if (!this.token) {
+      this.logger.warn('No GitHub token provided - rate limits will be restricted');
+    }
+  }
+
+  async getRepositories(username: string): Promise<any[]> {
     try {
       // Try to get from cache first
-      const cachedData = await this.cacheManager.get<GithubRepository[]>(
-        `repos:${username}`,
-      );
-      if (cachedData) {
-        return cachedData;
+      const cacheKey = `github_repos_${username}`;
+      const cached = await this.cacheManager.get<any[]>(cacheKey);
+      if (cached) {
+        return cached;
       }
 
-      const response = await fetch(
-        `${this.apiUrl}/users/${username}/repos?sort=updated`,
-        {
-          headers: {
-            Authorization: `token ${this.accessToken}`,
-            Accept: 'application/vnd.github.v3+json',
-          },
-        },
-      );
+      // Make API request if not in cache
+      const headers: HeadersInit = {
+        'Accept': 'application/vnd.github.v3+json',
+      };
+
+      if (this.token) {
+        headers['Authorization'] = `Bearer ${this.token}`;
+      }
+
+      const response = await fetch(`${this.baseUrl}/users/${username}/repos`, {
+        headers,
+      });
 
       if (!response.ok) {
-        if (response.status === 404) {
-          throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-        }
-        if (response.status === 403) {
-          throw new HttpException(
-            'GitHub API rate limit exceeded',
-            HttpStatus.TOO_MANY_REQUESTS,
-          );
-        }
-        throw new HttpException(
-          'GitHub API error',
-          HttpStatus.INTERNAL_SERVER_ERROR,
+        throw new BadRequestException(
+          `GitHub API error: ${response.status} ${response.statusText}`,
         );
       }
 
-      const repos = await response.json();
-      const formattedRepos: GithubRepository[] = repos.map((repo: any) => ({
-        name: repo.name,
-        description: repo.description,
-        url: repo.html_url,
-        starCount: repo.stargazers_count,
-        forkCount: repo.forks_count,
-        primaryLanguage: repo.language,
-      }));
+      const data = await response.json();
 
       // Cache the results
-      await this.cacheManager.set(`repos:${username}`, formattedRepos, 300); // Cache for 5 minutes
+      await this.cacheManager.set(cacheKey, data, 60 * 1000); // Cache for 1 minute
 
-      return formattedRepos;
+      return data;
     } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        'Failed to fetch repositories',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+      this.logger.error(`Failed to fetch repositories for ${username}:`, error);
+      throw new BadRequestException(
+        `Failed to fetch GitHub repositories: ${error.message}`,
       );
     }
   }
