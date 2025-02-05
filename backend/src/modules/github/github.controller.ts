@@ -1,7 +1,9 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { GithubService } from './github.service';
 
 @Controller('users')
+@UseGuards(ThrottlerGuard)
 export class GithubController {
   constructor(private readonly githubService: GithubService) {}
 
