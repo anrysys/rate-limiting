@@ -1,8 +1,58 @@
+'use client';
+
+import { useState } from 'react';
+import { Input } from '@/app/components/ui/input';
+import { Button } from '@/app/components/ui/button';
 import SearchForm from './components/search/SearchForm';
 
-export default function Home() {
+export default function HomePage() {
+  const [inputValue, setInputValue] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: inputValue }),
+      });
+      const result = await response.json();
+      if (result.success) {
+        setInputValue('');
+        alert('Data sent successfully!');
+      } else {
+        alert(result.error || 'Failed to send data');
+      }
+    } catch (error) {
+      alert('Error sending data');
+    }
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
+    <main className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Rate Limiting Test</h1>
+      <form onSubmit={handleSubmit} className="max-w-md space-y-4">
+        <div className="space-y-2">
+          <Input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Enter your data"
+            aria-label="Data input field"
+            required
+            className="w-full"
+          />
+        </div>
+        <Button 
+          type="submit" 
+          aria-label="Submit data"
+          className="w-full"
+        >
+          Submit
+        </Button>
+      </form>
       <h1 className="text-4xl font-bold mb-8">GitHub Repository Explorer</h1>
       <p className="text-lg mb-8 text-gray-600">Enter a GitHub username to explore their repositories</p>
       <SearchForm />
