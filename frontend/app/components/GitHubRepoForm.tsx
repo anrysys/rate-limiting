@@ -80,7 +80,7 @@ export function GitHubRepoForm() {
         <div>
           <label 
             htmlFor="username" 
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-200 mb-2"
           >
             GitHub Username
           </label>
@@ -88,12 +88,12 @@ export function GitHubRepoForm() {
             {...register('username', { required: 'Username is required' })}
             id="username"
             type="text"
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
-            placeholder="Enter GitHub username"
+            className="block w-full rounded-lg border border-gray-600 bg-gray-700/50 px-4 py-3 text-white placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Enter GitHub username (e.g., octocat)"
             aria-describedby="username-error"
           />
           {errors.username && (
-            <p className="mt-1 text-sm text-red-600" id="username-error">
+            <p className="mt-2 text-sm text-red-400" id="username-error">
               {errors.username.message}
             </p>
           )}
@@ -101,48 +101,56 @@ export function GitHubRepoForm() {
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+          className="w-full rounded-lg bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-4 py-3 text-sm font-medium text-white shadow-lg hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 transition-all duration-200"
           aria-label="Search repositories"
         >
-          {loading ? 'Searching...' : 'Search'}
+          {loading ? (
+            <span className="flex items-center justify-center">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Searching...
+            </span>
+          ) : 'Search Repositories'}
         </button>
       </form>
 
       {error && (
-        <div className="rounded-md bg-red-50 p-4" role="alert">
-          <div className="text-sm text-red-700">{error}</div>
+        <div className="rounded-lg bg-red-900/50 border border-red-500 p-4" role="alert">
+          <div className="text-sm text-red-400">{error}</div>
         </div>
       )}
 
       {repos.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
+          <h2 className="text-xl font-medium text-white mb-4">
             Repositories ({totalRepos} total)
           </h2>
           <ul className="space-y-4">
             {repos.map((repo) => (
               <li 
                 key={repo.id} 
-                className="bg-white shadow rounded-lg p-4"
+                className="bg-gray-700/30 border border-gray-600 rounded-lg p-4 hover:bg-gray-700/50 transition-colors duration-200"
               >
                 <h3 className="text-lg font-medium">
                   <a
                     href={repo.html_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-indigo-600 hover:text-indigo-500"
+                    className="text-indigo-400 hover:text-indigo-300"
                     aria-label={`Open ${repo.name} repository`}
                   >
                     {repo.name}
                   </a>
                 </h3>
                 {repo.description && (
-                  <p className="mt-1 text-gray-500">{repo.description}</p>
+                  <p className="mt-1 text-gray-300">{repo.description}</p>
                 )}
-                <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                <div className="mt-2 flex items-center space-x-4 text-sm text-gray-400">
                   <span>{repo.language || 'No language specified'}</span>
-                  <span>⭐ {repo.stargazers_count}</span>
-                  <span>🔄 {repo.forks_count}</span>
+                  <span title="Stars">⭐ {repo.stargazers_count}</span>
+                  <span title="Forks">🔄 {repo.forks_count}</span>
                 </div>
               </li>
             ))}

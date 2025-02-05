@@ -99,3 +99,44 @@ cp .env.example .env
 # Start containers
 docker compose up -d
 ```
+
+## System Architecture Diagram
+
+```mermaid
+graph TB
+    subgraph "Frontend (Next.js)"
+        Client[Client Browser]
+        NextAPI[Next.js API Routes]
+        Pages[Pages & Components]
+        State[Zustand State]
+    end
+
+    subgraph "Backend (NestJS)"
+        NestApp[NestJS Application]
+        Controllers[Controllers]
+        Services[Services]
+        Guards[Rate Limiting Guards]
+        Redis[(Redis Cache)]
+        PostgreSQL[(PostgreSQL)]
+    end
+
+    subgraph "External Services"
+        GitHub[GitHub API]
+    end
+
+    Client -->|Request| Pages
+    Pages -->|State Management| State
+    Pages -->|API Call| NextAPI
+    NextAPI -->|Proxy Request| NestApp
+    NestApp -->|Route| Controllers
+    Controllers -->|Business Logic| Services
+    Services -->|Rate Check| Guards
+    Guards -->|Store Limits| Redis
+    Services -->|Data Storage| PostgreSQL
+    Services -->|Fetch Data| GitHub
+
+    style Client fill:#f9f,stroke:#333,stroke-width:2px
+    style Redis fill:#ff9999,stroke:#333,stroke-width:2px
+    style PostgreSQL fill:#99ff99,stroke:#333,stroke-width:2px
+    style GitHub fill:#9999ff,stroke:#333,stroke-width:2px
+```
