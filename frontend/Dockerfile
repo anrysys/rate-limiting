@@ -25,5 +25,5 @@ RUN npm prune --production
 
 EXPOSE 3111
 
-# Start the application
-CMD ["npm", "start"]
+# Change the start command to use standalone server
+CMD ["node", ".next/standalone/server.js"]
