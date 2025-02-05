@@ -1,7 +1,11 @@
 {
+  "name": "rate-limiting",
+  "version": "1.0.0",
   "scripts": {
-    "dev": "docker compose -f docker-compose.dev.yml up",
-    "dev:build": "docker compose -f docker-compose.dev.yml up --build",
-    "dev:down": "docker compose -f docker-compose.dev.yml down"
+    "dev:down": "docker compose -f docker-compose.dev.yml down",
+    "dev:build": "docker compose -f docker-compose.dev.yml build",
+    "dev:up": "docker compose -f docker-compose.dev.yml up -d",
+    "dev": "npm run dev:down && npm run dev:build && npm run dev:up",
+    "logs": "docker compose -f docker-compose.dev.yml logs -f"
   }
 }

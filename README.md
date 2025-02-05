@@ -120,13 +120,18 @@ docker compose -f docker-compose.dev.yml logs -f
 
 # Stop development servers
 docker compose -f docker-compose.dev.yml down
+
+# Rebuild and restart development servers
+npm run dev:down
+npm run dev:build
+npm run dev:up
 ```
 
 ### Development URLs
 
 - Frontend: http://localhost:3111
 - Backend: http://localhost:5111
-- API Documentation: http://localhost:5111/api/docs (ожидается...)
+- API Documentation: http://localhost:5111/api/docs (coming soon)
 
 ### Hot Reload
 
