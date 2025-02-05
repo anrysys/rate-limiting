@@ -5,27 +5,32 @@ export async function GET(
   { params }: { params: { username: string } }
 ) {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/users/${params.username}/repos`
-    );
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to fetch repositories');
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    if (!backendUrl) {
+      throw new Error('NEXT_PUBLIC_BACKEND_URL environment variable is not defined');
     }
 
-    return NextResponse.json({
-      success: true,
-      data: data,
-      error: null
-    });
+    const username = params.username;
+    const fullUrl = `${backendUrl}/users/${username}/repos`;
+    console.log('Fetching repos from backend:', fullUrl);
+
+    const response = await fetch(fullUrl);
+    if (!response.ok) {
+      throw new Error(`Backend responded with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('API route error:', error);
     
-  } catch (error: any) {
-    return NextResponse.json({
-      success: false,
-      data: null,
-      error: error.message
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        data: null,
+        error: `Failed to fetch repositories: ${error.message}`,
+      },
+      { status: 500 }
+    );
   }
 }

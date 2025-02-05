@@ -17,7 +17,7 @@ interface ApiResponse<T> {
   error: string | null;
 }
 
-@Controller('api/data')
+@Controller('data')  // Changed from 'api/data' to just 'data'
 @UseGuards(ThrottlerGuard)
 export class DataController {
   constructor(private readonly dataService: DataService) {}

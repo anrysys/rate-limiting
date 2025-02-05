@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   frontend:
     build:
@@ -6,8 +8,9 @@ services:
     ports:
       - "3111:3111"
     environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_BACKEND_API_URL=http://backend:5111
+      - NODE_ENV=development
+      - NEXT_PUBLIC_BACKEND_URL=http://backend:5111
+      - NEXT_PUBLIC_GITHUB_API_URL=https://api.github.com
       - PORT=3111
     volumes:
       - ./frontend:/app
@@ -15,6 +18,8 @@ services:
       - /app/.next
     depends_on:
       - backend
+    networks:
+      - app-network
 
   backend:
     build:
@@ -33,6 +38,8 @@ services:
       - /app/dist
     depends_on:
       - redis
+    networks:
+      - app-network
 
   redis:
     image: redis:alpine
@@ -44,6 +51,12 @@ services:
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     ulimits:
       memlock: -1
+    networks:
+      - app-network
 
 volumes:
   redis_data:
+
+networks:
+  app-network:
+    driver: bridge
