@@ -1,8 +1,15 @@
-import { Injectable, Logger, OnModuleInit, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  OnModuleInit,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
+import { GithubRepository } from '../interfaces/github-repository.interface';
 
 @Injectable()
 export class GithubService implements OnModuleInit {
@@ -20,51 +27,65 @@ export class GithubService implements OnModuleInit {
     }
     this.baseUrl = baseUrl;
     this.token = this.configService.get<string>('github.token');
-  }
 
-  async onModuleInit() {
-    this.logger.log(`Initialized with API URL: ${this.baseUrl}`);
     if (!this.token) {
-      this.logger.warn('No GitHub token provided - rate limits will be restricted');
+      this.logger.warn(
+        'GitHub token is not configured - API access will be limited',
+      );
     }
   }
 
-  async getRepositories(username: string): Promise<any[]> {
+  onModuleInit() {
+    this.logger.log(`Initialized with API URL: ${this.baseUrl}`);
+  }
+  async getRepositories(username: string): Promise<GithubRepository[]> {
     try {
-      // Try to get from cache first
-      const cacheKey = `github_repos_${username}`;
+      // Check cache first
+      const cached = await this.cacheManager.get<GithubRepository[]>(cacheKey);
       const cached = await this.cacheManager.get<any[]>(cacheKey);
       if (cached) {
+        this.logger.log(`Cache hit for ${username}'s repositories`);
         return cached;
       }
 
-      // Make API request if not in cache
+      // API request configuration
       const headers: HeadersInit = {
-        'Accept': 'application/vnd.github.v3+json',
+        Accept: 'application/vnd.github.v3+json',
       };
 
       if (this.token) {
-        headers['Authorization'] = `Bearer ${this.token}`;
+        headers['Authorization'] = `token ${this.token}`;
       }
 
+      // Make API request
       const response = await fetch(`${this.baseUrl}/users/${username}/repos`, {
         headers,
       });
+
+      if (response.status === 401) {
+        throw new UnauthorizedException(
+          'Invalid GitHub token or unauthorized access',
+        );
+      }
 
       if (!response.ok) {
         throw new BadRequestException(
           `GitHub API error: ${response.status} ${response.statusText}`,
         );
       }
-
+      const data = (await response.json()) as GithubRepository[];
       const data = await response.json();
 
-      // Cache the results
-      await this.cacheManager.set(cacheKey, data, 60 * 1000); // Cache for 1 minute
+      // Cache successful response
+      await this.cacheManager.set(cacheKey, data, 60 * 1000); // 1 minute cache
+      this.logger.log(`Cached ${username}'s repositories`);
 
       return data;
     } catch (error) {
       this.logger.error(`Failed to fetch repositories for ${username}:`, error);
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
       throw new BadRequestException(
         `Failed to fetch GitHub repositories: ${error.message}`,
       );
