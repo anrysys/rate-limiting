@@ -2,37 +2,77 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Pagination } from './Pagination';
 
 interface FormData {
   username: string;
 }
 
+interface Repository {
+  id: number;
+  name: string;
+  description: string | null;
+  html_url: string;
+  language: string | null;
+  stargazers_count: number;
+  forks_count: number;
+}
+
+interface RepositoryResponse {
+  items: Repository[];
+  total: number;
+}
+
+const PER_PAGE = 10;
+
 export function GitHubRepoForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [repos, setRepos] = useState<any[]>([]);
+  const [repos, setRepos] = useState<Repository[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRepos, setTotalRepos] = useState(0);
   
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
 
-  const onSubmit = async (data: FormData) => {
+  const fetchRepositories = async (username: string, page: number) => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await fetch(`/api/users/${data.username}/repos`);
+      const response = await fetch(`/api/users/${username}/repos?page=${page}&per_page=${PER_PAGE}`);
       const result = await response.json();
       
       if (!result.success) {
         throw new Error(result.error);
       }
       
-      setRepos(result.data);
+      // Убедимся, что у нас есть данные и они в правильном формате
+      const repoData = result.data as RepositoryResponse;
+      setRepos(repoData.items || []);
+      setTotalRepos(repoData.total || 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch repositories');
+      // Очищаем репозитории при ошибке
+      setRepos([]);
+      setTotalRepos(0);
     } finally {
       setLoading(false);
     }
   };
+
+  const onSubmit = async (data: FormData) => {
+    setCurrentPage(1);
+    await fetchRepositories(data.username, 1);
+  };
+
+  const handlePageChange = async (page: number) => {
+    setCurrentPage(page);
+    const formData = new FormData(document.querySelector('form') as HTMLFormElement);
+    const username = formData.get('username') as string;
+    await fetchRepositories(username, page);
+  };
+
+  const totalPages = Math.ceil(totalRepos / PER_PAGE);
 
   return (
     <div className="space-y-8">
@@ -76,7 +116,9 @@ export function GitHubRepoForm() {
 
       {repos.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Repositories</h2>
+          <h2 className="text-lg font-medium text-gray-900 mb-4">
+            Repositories ({totalRepos} total)
+          </h2>
           <ul className="space-y-4">
             {repos.map((repo) => (
               <li 
@@ -105,6 +147,16 @@ export function GitHubRepoForm() {
               </li>
             ))}
           </ul>
+          
+          {totalPages > 1 && (
+            <div className="mt-8">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

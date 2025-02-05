@@ -5,10 +5,14 @@ export async function GET(
   { params }: { params: { username: string } }
 ) {
   try {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const perPage = parseInt(searchParams.get('per_page') || '10');
+    
     // When running in Docker, use internal Docker network URL
     const backendUrl = 'http://backend:5111';
     const username = params.username;
-    const fullUrl = `${backendUrl}/users/${username}/repos`;
+    const fullUrl = `${backendUrl}/users/${username}/repos?page=${page}&per_page=${perPage}`;
     
     console.log('Frontend: Attempting to fetch from backend:', fullUrl);
 
