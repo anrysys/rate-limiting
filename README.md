@@ -93,12 +93,46 @@ git clone https://github.com/username/rate-limiting.git
 # Enter project directory  
 cd rate-limiting
 
-# Copy environment file
-cp .env.example .env
+# Copy environment files
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
 
-# Start containers
-docker compose up -d
+# Install dependencies
+cd backend && npm install
+cd ../frontend && npm install
+cd ..
+
+# Start development servers
+
+## Option 1: Development with Docker (recommended)
+# Start all services with hot-reload
+docker compose -f docker-compose.dev.yml up -d
+
+## Option 2: Development without Docker
+# Terminal 1: Start backend (http://localhost:5111)
+cd backend && npm run start:dev
+
+# Terminal 2: Start frontend (http://localhost:3111)
+cd frontend && npm run dev
+
+# View logs
+docker compose -f docker-compose.dev.yml logs -f
+
+# Stop development servers
+docker compose -f docker-compose.dev.yml down
 ```
+
+### Development URLs
+
+- Frontend: http://localhost:3111
+- Backend: http://localhost:5111
+- API Documentation: http://localhost:5111/api/docs
+
+### Hot Reload
+
+- Frontend changes will automatically trigger browser refresh
+- Backend changes will automatically restart the NestJS server
+- Database changes require manual migration: `npm run migration:run` in backend directory
 
 ## System Architecture Diagram
 
