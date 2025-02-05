@@ -1,5 +1,7 @@
 # GitHub Repository Explorer
 
+![alt text](image.png)
+
 ## Overview
 
 Build a full stack application that allows a user to search for GitHub repositories by entering a GitHub username. Your application will have:
