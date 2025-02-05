@@ -133,7 +133,7 @@ npm run dev:up
 
 - Frontend: http://localhost:3111
 - Backend: http://localhost:5111
-- API Documentation: http://localhost:5111/api/docs (coming soon)
+- API Documentation: http://localhost:5111/api/docs (Swagger) coming soon ...
 
 ### Hot Reload
 
