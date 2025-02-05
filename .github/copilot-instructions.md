@@ -37,6 +37,7 @@
 33. Всегда помни, что url адрес для бекенд: `http://localhost:5111`
 34. Всегда помни, что url адрес для фронтенд: `http://localhost:5111`
 35. Always add appropriate ARIA attributes (aria-label, aria-describedby, aria-labelledby, etc.) to all interactive elements to ensure accessibility and prevent warnings like "Missing aria-* attributes".
+36. Всегда помни, что мы используем команду "docker compose" вместо устаревшей "docker-compose".
 
 ## Tech Stack
 

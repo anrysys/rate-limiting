@@ -27,6 +27,7 @@ yarn-error.log*
 .env
 .env.local
 .env.development.local
+.github/copilot-instructions.md
 .env.test.local
 .env.production.local
 
