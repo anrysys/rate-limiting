@@ -1,40 +1,61 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GithubService {
-  constructor(private readonly configService: ConfigService) {}
+  private readonly logger = new Logger(GithubService.name);
+  private readonly githubApiUrl: string;
 
-  async getUserRepos(username: string) {
+  constructor(private readonly configService: ConfigService) {
+    this.githubApiUrl = this.configService.get<string>('GITHUB_API_URL') || 'https://api.github.com';
+    this.logger.log(`Initialized with GitHub API URL: ${this.githubApiUrl}`);
+  }
+
+  async getUserRepositories(username: string) {
+    this.logger.debug(`Fetching repositories for user: ${username}`);
+
     try {
-      const githubApiUrl = this.configService.get<string>('GITHUB_API_URL');
-      const response = await fetch(`${githubApiUrl}/users/${username}/repos`, {
+      const url = `${this.githubApiUrl}/users/${username}/repos`;
+      this.logger.debug(`Making request to: ${url}`);
+
+      const response = await fetch(url, {
+        method: 'GET',
         headers: {
           'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'NestJS-App',
+          'User-Agent': 'rate-limiting-app',
         },
       });
 
+      const rateLimit = {
+        limit: response.headers.get('x-ratelimit-limit'),
+        remaining: response.headers.get('x-ratelimit-remaining'),
+        reset: response.headers.get('x-ratelimit-reset'),
+      };
+
+      this.logger.log('GitHub API Rate Limit:', rateLimit);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        this.logger.error(`GitHub API error: ${response.status} - ${errorText}`);
+        
         throw new HttpException(
-          `GitHub API responded with status: ${response.status}`,
+          `GitHub API error: ${response.statusText || 'Failed to fetch data'}`,
           response.status,
         );
       }
 
-      const repos = await response.json();
-      return repos.map(repo => ({
-        name: repo.name,
-        description: repo.description,
-        url: repo.html_url,
-        stars: repo.stargazers_count,
-        forks: repo.forks_count,
-        language: repo.language,
-      }));
+      const data = await response.json();
+      return data;
     } catch (error) {
+      this.logger.error('Error fetching GitHub repositories:', error);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       throw new HttpException(
-        error.message || 'Failed to fetch GitHub repositories',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        `Failed to fetch GitHub repositories: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

@@ -10,16 +10,18 @@ services:
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_BACKEND_URL=http://backend:5111
-      - NEXT_PUBLIC_GITHUB_API_URL=https://api.github.com
       - PORT=3111
     volumes:
       - ./frontend:/app
       - /app/node_modules
       - /app/.next
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     networks:
       - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   backend:
     build:
@@ -32,6 +34,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - GITHUB_API_URL=https://api.github.com
+      - PORT=5111
     volumes:
       - ./backend:/app
       - /app/node_modules
@@ -40,6 +43,11 @@ services:
       - redis
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5111/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   redis:
     image: redis:alpine
@@ -60,3 +68,4 @@ volumes:
 networks:
   app-network:
     driver: bridge
+    name: rate-limiting-network

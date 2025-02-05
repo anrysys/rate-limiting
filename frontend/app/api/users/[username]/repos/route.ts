@@ -5,30 +5,37 @@ export async function GET(
   { params }: { params: { username: string } }
 ) {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-    if (!backendUrl) {
-      throw new Error('NEXT_PUBLIC_BACKEND_URL environment variable is not defined');
-    }
-
+    // When running in Docker, use internal Docker network URL
+    const backendUrl = 'http://backend:5111';
     const username = params.username;
     const fullUrl = `${backendUrl}/users/${username}/repos`;
-    console.log('Fetching repos from backend:', fullUrl);
+    
+    console.log('Frontend: Attempting to fetch from backend:', fullUrl);
 
-    const response = await fetch(fullUrl);
+    const response = await fetch(fullUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
     if (!response.ok) {
       throw new Error(`Backend responded with status: ${response.status}`);
     }
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error) {
-    console.error('API route error:', error);
+  } catch (error: unknown) {
+    console.error('Frontend API route error:', {
+      message: error instanceof Error ? error.message : String(error),
+    });
     
     return NextResponse.json(
       {
         success: false,
         data: null,
-        error: `Failed to fetch repositories: ${error.message}`,
+        error: error instanceof Error ? error.message : 'Failed to fetch repositories',
       },
       { status: 500 }
     );
