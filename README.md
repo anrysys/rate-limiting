@@ -137,7 +137,6 @@ npm run dev:up
 
 - Frontend changes will automatically trigger browser refresh
 - Backend changes will automatically restart the NestJS server
-- Database changes require manual migration: `npm run migration:run` in backend directory
 
 ## System Architecture Diagram
 
