@@ -1,5 +1,4 @@
-import Image from "next/image";
-import SearchForm from '@/app/components/search/SearchForm';
+import SearchForm from './components/search/SearchForm';
 
 export default function Home() {
   return (
