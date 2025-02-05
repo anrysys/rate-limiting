@@ -6,11 +6,12 @@ services:
     ports:
       - "3111:3111"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production # Changed from development to production
       - NEXT_PUBLIC_BACKEND_API_URL=http://backend:5111
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - /app/.next # Added volume for .next directory
     depends_on:
       - backend
 
