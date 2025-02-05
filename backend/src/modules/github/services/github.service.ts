@@ -38,11 +38,12 @@ export class GithubService implements OnModuleInit {
   onModuleInit() {
     this.logger.log(`Initialized with API URL: ${this.baseUrl}`);
   }
+
   async getRepositories(username: string): Promise<GithubRepository[]> {
     try {
+      const cacheKey = `github:repos:${username}`;
       // Check cache first
       const cached = await this.cacheManager.get<GithubRepository[]>(cacheKey);
-      const cached = await this.cacheManager.get<any[]>(cacheKey);
       if (cached) {
         this.logger.log(`Cache hit for ${username}'s repositories`);
         return cached;
@@ -73,21 +74,23 @@ export class GithubService implements OnModuleInit {
           `GitHub API error: ${response.status} ${response.statusText}`,
         );
       }
+
       const data = (await response.json()) as GithubRepository[];
-      const data = await response.json();
 
       // Cache successful response
       await this.cacheManager.set(cacheKey, data, 60 * 1000); // 1 minute cache
       this.logger.log(`Cached ${username}'s repositories`);
 
       return data;
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to fetch repositories for ${username}:`, error);
       if (error instanceof UnauthorizedException) {
         throw error;
       }
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       throw new BadRequestException(
-        `Failed to fetch GitHub repositories: ${error.message}`,
+        `Failed to fetch GitHub repositories: ${errorMessage}`,
       );
     }
   }

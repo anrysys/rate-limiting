@@ -17,7 +17,9 @@ import { GithubModule } from './modules/github/github.module';
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (config: ConfigService): Promise<ThrottlerModuleOptions> => ({
+      useFactory: async (
+        config: ConfigService,
+      ): Promise<ThrottlerModuleOptions> => ({
         throttlers: [
           {
             ttl: config.get('throttle.ttl', 60),
