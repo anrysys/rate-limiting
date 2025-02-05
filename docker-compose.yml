@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "5111:5111"
+      - "3111:3111"
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_BACKEND_API_URL=http://backend:5111
@@ -24,7 +22,8 @@ services:
       - "5111:5111"
     environment:
       - NODE_ENV=development
-      - REDIS_URL=redis://redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - GITHUB_API_URL=https://api.github.com
     volumes:
       - ./backend:/app
