@@ -14,8 +14,9 @@ RUN npm install
 # Copy the rest of the application
 COPY . .
 
-# Set production environment
+# Set production environment and port
 ENV NODE_ENV=production
+ENV PORT=3111
 
 # Build the application
 RUN npm run build
@@ -25,5 +26,5 @@ RUN npm prune --production
 
 EXPOSE 3111
 
-# Change the start command to use standalone server
-CMD ["node", ".next/standalone/server.js"]
+# Start the application with explicit port
+CMD ["sh", "-c", "node .next/standalone/server.js -p 3111"]

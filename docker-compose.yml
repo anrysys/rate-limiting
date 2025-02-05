@@ -6,12 +6,13 @@ services:
     ports:
       - "3111:3111"
     environment:
-      - NODE_ENV=production # Changed from development to production
+      - NODE_ENV=production
       - NEXT_PUBLIC_BACKEND_API_URL=http://backend:5111
+      - PORT=3111
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - /app/.next # Added volume for .next directory
+      - /app/.next
     depends_on:
       - backend
 
@@ -29,6 +30,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - /app/dist
     depends_on:
       - redis
 
@@ -38,9 +40,10 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    sysctls:
-      - vm.overcommit_memory=1
-    command: redis-server --appendonly yes
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    ulimits:
+      memlock: -1
 
 volumes:
   redis_data:

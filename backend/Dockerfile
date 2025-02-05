@@ -1,15 +1,32 @@
+FROM node:18-alpine AS builder
 
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including dev dependencies)
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Start fresh from new base image
 FROM node:18-alpine
 
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
 
-RUN npm install
+# Install only production dependencies
+RUN npm install --only=production
 
-COPY . .
-
-RUN npm run build
+# Copy build artifacts from builder stage
+COPY --from=builder /app/dist ./dist
 
 EXPOSE 5111
 
