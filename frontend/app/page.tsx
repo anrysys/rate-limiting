@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Input } from '@/app/components/ui/input';
-import { Button } from '@/app/components/ui/button';
 import SearchForm from './components/search/SearchForm';
+import { Button } from './components/ui/button';
+import { Input } from './components/ui/input';
 
 export default function HomePage() {
   const [inputValue, setInputValue] = useState('');
