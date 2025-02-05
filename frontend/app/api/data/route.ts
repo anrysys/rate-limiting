@@ -4,8 +4,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    // Отправляем запрос на бэкенд
-    const response = await fetch('http://localhost:5111/api/data', {
+    // Using environment variable for backend URL
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://backend:5111';
+    
+    const response = await fetch(`${backendUrl}/api/data`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -31,7 +33,9 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: false,
       data: null,
-      error: error instanceof Error ? error.message : 'Failed to process data'
+      error: error instanceof Error 
+        ? `Connection error: ${error.message}` 
+        : 'Failed to connect to backend service'
     }, { status: 500 });
   }
 }
