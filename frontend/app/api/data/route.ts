@@ -4,9 +4,13 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    // Using environment variable for backend URL
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://backend:5111';
+    // In Docker, we should use the service name instead of localhost
+    const backendUrl = process.env.NODE_ENV === 'production' 
+      ? process.env.NEXT_PUBLIC_BACKEND_API_URL 
+      : 'http://backend:5111';
     
+    console.log('Connecting to backend at:', backendUrl);
+
     const response = await fetch(`${backendUrl}/api/data`, {
       method: 'POST',
       headers: {
@@ -30,12 +34,16 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('API route error:', error);
     
+    const errorMessage = error instanceof Error 
+      ? `Backend connection error: ${error.message}` 
+      : 'Failed to connect to backend service';
+
+    console.error('Detailed error:', errorMessage);
+    
     return NextResponse.json({
       success: false,
       data: null,
-      error: error instanceof Error 
-        ? `Connection error: ${error.message}` 
-        : 'Failed to connect to backend service'
+      error: errorMessage
     }, { status: 500 });
   }
 }

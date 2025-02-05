@@ -22,8 +22,8 @@ export default function HomePage() {
       const result = await response.json();
       
       if (result.success) {
-        setInputValue('');
-        alert('Data sent successfully!');
+        //setInputValue('');
+        // alert('Data sent successfully!');
       } else {
         alert(result.error || 'An unexpected error occurred');
       }

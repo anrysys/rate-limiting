@@ -7,6 +7,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import configuration from './config/configuration';
 import { GithubModule } from './modules/github/github.module';
+import { DataModule } from './modules/data/data.module';
 
 @Module({
   imports: [
@@ -17,9 +18,7 @@ import { GithubModule } from './modules/github/github.module';
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (
-        config: ConfigService,
-      ): Promise<ThrottlerModuleOptions> => ({
+      useFactory: (config: ConfigService): ThrottlerModuleOptions => ({
         throttlers: [
           {
             ttl: config.get('throttle.ttl', 60),
@@ -44,6 +43,7 @@ import { GithubModule } from './modules/github/github.module';
       }),
     }),
     GithubModule,
+    DataModule,
   ],
   controllers: [AppController],
   providers: [AppService],
