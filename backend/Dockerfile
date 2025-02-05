@@ -22,8 +22,9 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install only production dependencies
-RUN npm install --only=production
+# Install only production dependencies and cache manager deps
+RUN npm install --only=production && \
+    npm install keyv @nestjs/cache-manager cache-manager cache-manager-redis-yet
 
 # Copy build artifacts from builder stage
 COPY --from=builder /app/dist ./dist
