@@ -17,9 +17,9 @@ import configuration from './config/configuration';
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        ttl: 60, // Time-to-live for rate limiting window
-        limit: 30, // Number of requests allowed in the window
+      useFactory: async (config: ConfigService): Promise<any> => ({
+        ttl: 60,
+        limit: 30,
       }),
     }),
     CacheModule.registerAsync({

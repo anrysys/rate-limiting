@@ -14,8 +14,15 @@ export class GithubService {
     private readonly configService: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
-    this.apiUrl = this.configService.get<string>('github.apiUrl');
-    this.accessToken = this.configService.get<string>('github.accessToken');
+    const apiUrl = this.configService.get<string>('github.apiUrl');
+    const accessToken = this.configService.get<string>('github.accessToken');
+
+    if (!apiUrl || !accessToken) {
+      throw new Error('Missing required GitHub configuration');
+    }
+
+    this.apiUrl = apiUrl;
+    this.accessToken = accessToken;
   }
 
   async getRepositories(username: string): Promise<GithubRepository[]> {

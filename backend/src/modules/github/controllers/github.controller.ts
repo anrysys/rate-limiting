@@ -3,13 +3,13 @@ import {
   Get,
   Param,
   UseInterceptors,
-  CacheInterceptor,
   UseGuards,
 } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { GetRepositoriesDto } from '../dto/get-repositories.dto';
 import { GithubService } from '../services/github.service';
 import { ValidationPipe } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('github')
 @UseGuards(ThrottlerGuard)

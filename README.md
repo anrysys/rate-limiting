@@ -74,3 +74,28 @@ Provide brief instructions on how to run your application (both backend and fron
 Focus on writing clean, modular, and maintainable code. Comments and documentation are a plus.
 - Testing (Optional):
 If time permits, add simple unit tests for critical parts of your backend (e.g., testing the endpoint’s response to valid and invalid usernames).
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- Docker
+- Docker Compose
+- Git
+
+### Installation
+
+```bash
+# Clone repository
+git clone https://github.com/username/rate-limiting.git
+
+# Enter project directory  
+cd rate-limiting
+
+# Copy environment file
+cp .env.example .env
+
+# Start containers
+docker compose up -d
+```
