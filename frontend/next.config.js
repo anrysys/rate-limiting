@@ -1,18 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  images: {
-    domains: ['avatars.githubusercontent.com', 'github.com'],
-  },
+  reactStrictMode: true,
   experimental: {
-    serverActions: {
-      allowedForwardedHosts: ['localhost', '127.0.0.1'],
-    },
-  },
-  // Add port configuration
-  serverOptions: {
-    port: 3111,
-  },
-};
+    serverActions: true
+  }
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig

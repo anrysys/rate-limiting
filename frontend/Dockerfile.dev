@@ -5,11 +5,17 @@ WORKDIR /app
 # Install required system dependencies
 RUN apk add --no-cache libc6-compat python3 make g++
 
+# Set next telemetry disabled
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV npm_config_target_arch=x64
+ENV npm_config_target_platform=linux
+ENV npm_config_target_libc=musl
+
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Clean install dependencies
+RUN npm ci
 
 # Copy the rest of the application
 COPY . .
