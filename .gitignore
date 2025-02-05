@@ -41,3 +41,5 @@ docker-compose.override.yml
 # Redis
 dump.rdb
 .github/copilot-instructions.md
+
+log.txt

@@ -18,15 +18,18 @@ export default function HomePage() {
         },
         body: JSON.stringify({ data: inputValue }),
       });
+      
       const result = await response.json();
+      
       if (result.success) {
         setInputValue('');
         alert('Data sent successfully!');
       } else {
-        alert(result.error || 'Failed to send data');
+        alert(result.error || 'An unexpected error occurred');
       }
     } catch (error) {
-      alert('Error sending data');
+      console.error('Form submission error:', error);
+      alert('Failed to send data. Please try again later.');
     }
   };
 
