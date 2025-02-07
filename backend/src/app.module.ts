@@ -24,11 +24,14 @@ import { GithubModule } from './modules/github/github.module';
         });
 
         const storage = new RedisThrottlerStorage(redis);
-        const ttl: number = config.get('THROTTLE_TTL') ?? 60000; // Default 60 seconds
-        const limit: number = config.get('THROTTLE_LIMIT') ?? 10; // Default 10 requests
+        const ttl = config.get<number>('THROTTLE_TTL') ?? 60; // 60 seconds
+        const limit = config.get<number>('THROTTLE_LIMIT') ?? 10; // 10 requests
 
         return {
-          throttlers: [{ ttl, limit }],
+          throttlers: [{
+            ttl: ttl * 1000, // Convert to milliseconds
+            limit: limit,
+          }],
           storage,
         };
       },
