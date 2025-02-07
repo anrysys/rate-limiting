@@ -174,7 +174,7 @@ graph TB
     Controllers -->|Business Logic| Services
     Services -->|Rate Check| Guards
     Guards -->|Store Limits| Redis
-    Services -->|Data Storage (comming soon...)| PostgreSQL
+    Services -->|Data Storage| PostgreSQL
     Services -->|Fetch Data| GitHub
 
     style Client fill:#f9f,stroke:#333,stroke-width:2px
