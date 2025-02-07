@@ -1,15 +1,21 @@
-import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
-import { Inject } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { GithubRepository } from '../interfaces/github-repository.interface';
 
 @Injectable()
 export class GithubService {
   private readonly logger = new Logger(GithubService.name);
   private readonly githubApiUrl: string;
-  private readonly cacheTTL = 3600; // 1 hour
+  private readonly githubToken: string | undefined; // Changed type to allow undefined
+  private readonly cacheTTL = 300; // 5 minutes
 
   constructor(
     private readonly configService: ConfigService,
@@ -18,65 +24,125 @@ export class GithubService {
     this.githubApiUrl =
       this.configService.get<string>('GITHUB_API_URL') ||
       'https://api.github.com';
-    this.logger.log(`Initialized with GitHub API URL: ${this.githubApiUrl}`);
+    this.githubToken = this.configService.get<string>('GITHUB_TOKEN');
+
+    if (!this.githubToken) {
+      this.logger.warn(
+        'GITHUB_TOKEN not provided - API rate limits will be restricted',
+      );
+    }
+
+    this.logger.log('GitHub Service initialized:', {
+      apiUrl: this.githubApiUrl,
+      hasToken: !!this.githubToken,
+    });
   }
+
+  private getHeaders(): HeadersInit {
+    const headers: HeadersInit = {
+      Accept: 'application/vnd.github.v3+json',
+      'User-Agent': 'rate-limiting-app',
+    };
+
+    if (this.githubToken) {
+      headers['Authorization'] = `Bearer ${this.githubToken}`; // Changed to Bearer token
+    }
+
+    return headers;
+  }
+
+  private logCacheStatus(
+    type: 'hit' | 'miss',
+    username: string,
+    data?: GithubRepository[],
+  ) {
+    const status = {
+      type,
+      username,
+      timestamp: new Date().toISOString(),
+      nextReset: this.cacheTTL
+        ? new Date(Date.now() + this.cacheTTL * 1000).toISOString()
+        : null,
+      itemsCount: data?.length ?? 0,
+    };
+    this.logger.debug('Cache status:', status);
+  }
+
   async getUserRepositories(username: string): Promise<GithubRepository[]> {
     try {
-      // Try to get from cache first
       const cacheKey = `github:repos:${username}`;
-      const cachedData =
-        await this.cacheManager.get<GithubRepository[]>(cacheKey);
 
-      if (cachedData) {
-        this.logger.debug(`Cache hit for ${username}'s repositories`);
-        return cachedData;
+      // Try cache first
+      const cached = await this.cacheManager.get<GithubRepository[]>(cacheKey);
+      if (cached) {
+        this.logger.debug(`Cache hit for ${username}`, {
+          cacheKey,
+          itemsCount: cached.length,
+          username,
+        });
+        this.logCacheStatus('hit', username, cached);
+        return cached;
       }
 
-      this.logger.debug(`Cache miss for ${username}'s repositories`);
-      const url = `${this.githubApiUrl}/users/${username}/repos`;
+      this.logCacheStatus('miss', username);
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/vnd.github.v3+json',
-          'User-Agent': 'rate-limiting-app',
-        },
-      });
+      // Check if user exists
+      const userResponse = await fetch(
+        `${this.githubApiUrl}/users/${username}`,
+        { headers: this.getHeaders() },
+      );
 
-      // Log rate limit information
-      const rateLimit = {
-        limit: response.headers.get('x-ratelimit-limit'),
-        remaining: response.headers.get('x-ratelimit-remaining'),
-        reset: response.headers.get('x-ratelimit-reset'),
-      };
-      this.logger.log('GitHub API Rate Limit:', rateLimit);
-
-      if (!response.ok) {
+      if (!userResponse.ok) {
+        if (userResponse.status === 404) {
+          this.logger.warn(`User ${username} not found`);
+          throw new HttpException(
+            `GitHub user '${username}' not found`,
+            HttpStatus.NOT_FOUND,
+          );
+        }
         throw new HttpException(
-          `GitHub API error: ${response.statusText}`,
-          response.status,
+          `GitHub API error: ${userResponse.statusText}`,
+          userResponse.status,
         );
       }
-      const data = (await response.json()) as GithubRepository[];
 
-      // Cache the successful response
-      await this.cacheManager.set(cacheKey, data, this.cacheTTL);
+      // Fetch repositories
+      this.logger.debug(`Cache miss for ${username}, fetching from GitHub API`);
+      const reposResponse = await fetch(
+        `${this.githubApiUrl}/users/${username}/repos`,
+        { headers: this.getHeaders() },
+      );
 
-      return data;
-      return data;
-    } catch (error) {
-      this.logger.error('Error fetching GitHub repositories:', error);
+      // Log rate limits
+      const rateLimit = {
+        limit: reposResponse.headers.get('x-ratelimit-limit'),
+        remaining: reposResponse.headers.get('x-ratelimit-remaining'),
+        reset: new Date(
+          parseInt(reposResponse.headers.get('x-ratelimit-reset') || '0') *
+            1000,
+        ).toISOString(),
+        username,
+        hasToken: !!this.githubToken,
+      };
+      this.logger.log('GitHub API Rate Limits:', rateLimit);
 
-      if (error instanceof HttpException) {
-        throw error;
+      if (!reposResponse.ok) {
+        throw new HttpException(
+          `Failed to fetch repositories: ${reposResponse.statusText}`,
+          reposResponse.status,
+        );
       }
 
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      throw new HttpException(
-        `Failed to fetch GitHub repositories: ${errorMessage}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      const repos = (await reposResponse.json()) as GithubRepository[];
+
+      // Cache successful response
+      await this.cacheManager.set(cacheKey, repos, this.cacheTTL);
+      this.logger.debug(`Cached ${repos.length} repositories for ${username}`);
+
+      return repos;
+    } catch (error) {
+      this.logger.error(`Error processing request for ${username}:`, error);
+      throw error;
     }
   }
 }

@@ -8,7 +8,7 @@ import { GithubService } from '../services/github.service';
 export class GithubController {
   constructor(private readonly githubService: GithubService) {}
 
-  @Get(':username')
+  @Get(':username/repos')
   async getUserRepositories(
     @Param('username') username: string,
     @Query('page') page: string = '1',
@@ -39,14 +39,19 @@ export class GithubController {
       };
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error occurred';
+        error instanceof Error
+          ? error.message.includes('Not Found')
+            ? `GitHub user '${username}' not found`
+            : error.message
+          : 'Unknown error occurred';
+
       return {
         success: false,
         data: {
           items: [],
           total: 0,
         },
-        error: `Failed to fetch repositories: ${errorMessage}`,
+        error: errorMessage,
       };
     }
   }
