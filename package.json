@@ -4,6 +4,7 @@
   "scripts": {
     "dev:down": "docker compose -f docker-compose.dev.yml down",
     "dev:build": "docker compose -f docker-compose.dev.yml build",
+    "dev:restart": "npm run dev:down && npm run dev:up",
     "dev:up": "docker compose -f docker-compose.dev.yml up -d",
     "dev": "npm run dev:down && npm run dev:build && npm run dev:up",
     "logs": "docker compose -f docker-compose.dev.yml logs -f"

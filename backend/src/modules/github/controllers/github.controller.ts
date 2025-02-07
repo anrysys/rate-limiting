@@ -1,26 +1,53 @@
-import {
-  Controller,
-  Get,
-  Param,
-  UseInterceptors,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { GetRepositoriesDto } from '../dto/get-repositories.dto';
+import { GithubRepository } from '../interfaces/github-repository.interface';
 import { GithubService } from '../services/github.service';
-import { ValidationPipe } from '@nestjs/common';
-import { CacheInterceptor } from '@nestjs/cache-manager';
 
-@Controller('github')
+@Controller('users')
 @UseGuards(ThrottlerGuard)
-@UseInterceptors(CacheInterceptor)
 export class GithubController {
   constructor(private readonly githubService: GithubService) {}
 
-  @Get('users/:username/repos')
-  async getRepositories(
-    @Param(ValidationPipe) params: GetRepositoriesDto,
-  ) {
-    return await this.githubService.getRepositories(params.username);
+  @Get(':username')
+  async getUserRepositories(
+    @Param('username') username: string,
+    @Query('page') page: string = '1',
+    @Query('per_page') perPage: string = '10',
+  ): Promise<{
+    success: boolean;
+    data: {
+      items: GithubRepository[];
+      total: number;
+    };
+    error: string | null;
+  }> {
+    try {
+      const repos: GithubRepository[] =
+        await this.githubService.getUserRepositories(username);
+      const pageNum = parseInt(page);
+      const itemsPerPage = parseInt(perPage);
+      const start = (pageNum - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+
+      return {
+        success: true,
+        data: {
+          items: repos.slice(start, end),
+          total: repos.length,
+        },
+        error: null,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
+      return {
+        success: false,
+        data: {
+          items: [],
+          total: 0,
+        },
+        error: `Failed to fetch repositories: ${errorMessage}`,
+      };
+    }
   }
 }

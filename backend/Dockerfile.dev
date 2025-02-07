@@ -2,18 +2,23 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Install nodemon globally
+RUN npm install -g nodemon
+
 # Install required system dependencies
 RUN apk add --no-cache python3 make g++
 
-# Copy package files
+# Install dependencies first to leverage Docker cache
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy the rest of the application
+# Copy source code
 COPY . .
 
 EXPOSE 5111
 
-CMD ["npm", "run", "start:dev"]
+# Use nodemon directly instead of nest start --watch
+CMD ["nodemon", "--exec", "node", "--watch", "dist", "dist/main"]
+
+# Add a separate command for the TypeScript compiler in watch mode
+CMD ["sh", "-c", "npm run build -- --watch & nodemon dist/main.js"]

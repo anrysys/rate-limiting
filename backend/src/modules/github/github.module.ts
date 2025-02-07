@@ -3,8 +3,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import * as redisStore from 'cache-manager-redis-store';
-import { GithubController } from './github.controller';
-import { GithubService } from './github.service';
+import { GithubController } from './controllers/github.controller';
+import { GithubService } from './services/github.service';
 
 @Module({
   imports: [
@@ -17,10 +17,12 @@ import { GithubService } from './github.service';
         ttl: 3600,
       }),
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60,
-      limit: 10,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60,
+        limit: 10,
+      },
+    ]),
   ],
   controllers: [GithubController],
   providers: [GithubService],
