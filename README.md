@@ -14,8 +14,8 @@ Build a full stack application that allows a user to search for GitHub repositor
 
 ## Tech Stack
 
-Backend: NestJS, TypeScript, GitHub API, Redis (for caching), Docker
-Frontend: Next.js, TypeScript, Zustand (for state management), SWR, Tailwind CSS, Docker
+- Backend: NestJS, TypeScript, GitHub API, Redis (for caching), Docker
+- Frontend: Next.js, TypeScript, Zustand (for state management), SWR, Tailwind CSS, Docker
 
 ### API Endpoint
 
