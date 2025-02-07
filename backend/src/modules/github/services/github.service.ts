@@ -12,9 +12,11 @@ export class GithubService {
 
   constructor(
     private readonly configService: ConfigService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
-    this.githubApiUrl = this.configService.get<string>('GITHUB_API_URL') || 'https://api.github.com';
+    this.githubApiUrl =
+      this.configService.get<string>('GITHUB_API_URL') ||
+      'https://api.github.com';
     this.logger.log(`Initialized with GitHub API URL: ${this.githubApiUrl}`);
   }
 
@@ -23,7 +25,7 @@ export class GithubService {
       // Try to get from cache first
       const cacheKey = `github:repos:${username}`;
       const cachedData = await this.cacheManager.get(cacheKey);
-      
+
       if (cachedData) {
         this.logger.debug(`Cache hit for ${username}'s repositories`);
         return cachedData;
@@ -35,7 +37,7 @@ export class GithubService {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Accept': 'application/vnd.github.v3+json',
+          Accept: 'application/vnd.github.v3+json',
           'User-Agent': 'rate-limiting-app',
         },
       });
@@ -56,10 +58,10 @@ export class GithubService {
       }
 
       const data = await response.json();
-      
+
       // Cache the successful response
       await this.cacheManager.set(cacheKey, data, this.cacheTTL);
-      
+
       return data;
     } catch (error) {
       this.logger.error('Error fetching GitHub repositories:', error);
@@ -68,8 +70,10 @@ export class GithubService {
         throw error;
       }
 
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       throw new HttpException(
-        `Failed to fetch GitHub repositories: ${error.message}`,
+        `Failed to fetch GitHub repositories: ${errorMessage}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

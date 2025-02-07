@@ -17,7 +17,7 @@ import { GithubModule } from './modules/github/github.module';
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (config: ConfigService): Promise<ThrottlerModuleOptions> => {
+      useFactory: (config: ConfigService): ThrottlerModuleOptions => {
         const redis = new Redis({
           host: config.get('REDIS_HOST'),
           port: config.get('REDIS_PORT'),
@@ -28,10 +28,12 @@ import { GithubModule } from './modules/github/github.module';
         const limit = config.get<number>('THROTTLE_LIMIT') ?? 10; // 10 requests
 
         return {
-          throttlers: [{
-            ttl: ttl * 1000, // Convert to milliseconds
-            limit: limit,
-          }],
+          throttlers: [
+            {
+              ttl: ttl * 1000, // Convert to milliseconds
+              limit: limit,
+            },
+          ],
           storage,
         };
       },
