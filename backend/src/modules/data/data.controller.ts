@@ -6,7 +6,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { DataService } from './data.service';
 import { CreateDataDto } from './dto/create-data.dto';
 import { IDataResponse } from './interfaces/data-response.interface';
@@ -17,7 +17,7 @@ interface ApiResponse<T> {
   error: string | null;
 }
 
-@Controller('data')  // Changed from 'api/data' to just 'data'
+@Controller('data') // Changed from 'api/data' to just 'data'
 @UseGuards(ThrottlerGuard)
 export class DataController {
   constructor(private readonly dataService: DataService) {}
@@ -25,7 +25,7 @@ export class DataController {
   @Post()
   @Throttle({ default: { ttl: 60000, limit: 10 } })
   async create(
-    @Body() createDataDto: CreateDataDto
+    @Body() createDataDto: CreateDataDto,
   ): Promise<ApiResponse<IDataResponse>> {
     try {
       const result = await this.dataService.create(createDataDto);
@@ -34,8 +34,8 @@ export class DataController {
         data: result,
         error: null,
       };
-    } catch (error) {
-      if (error.name === 'ThrottlerException') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'ThrottlerException') {
         throw new HttpException(
           {
             success: false,
@@ -45,7 +45,8 @@ export class DataController {
           HttpStatus.TOO_MANY_REQUESTS,
         );
       }
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unexpected error occurred';
       throw new HttpException(
         {
           success: false,

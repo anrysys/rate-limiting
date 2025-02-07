@@ -90,7 +90,7 @@ If time permits, add simple unit tests for critical parts of your backend (e.g.,
 
 ```bash
 # Clone repository
-git clone https://github.com/username/rate-limiting.git
+git clone https://github.com/anrysys/rate-limiting.git
 
 # Enter project directory  
 cd rate-limiting

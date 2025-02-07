@@ -25,3 +25,6 @@ clean:
 	docker compose down -v
 	rm -rf backend/node_modules
 	rm -rf frontend/node_modules
+
+logs:
+	docker compose logs -f backend frontend redis	
