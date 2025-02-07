@@ -25,6 +25,14 @@ export async function GET(
     });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        return NextResponse.json({
+          success: false,
+          data: null,
+          error: 'Rate limit exceeded. Please try again later.',
+          retryAfter: response.headers.get('Retry-After') || '60'
+        }, { status: 429 });
+      }
       throw new Error(`Backend responded with status: ${response.status}`);
     }
 

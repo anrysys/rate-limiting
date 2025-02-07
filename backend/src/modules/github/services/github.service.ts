@@ -70,79 +70,60 @@ export class GithubService {
 
   async getUserRepositories(username: string): Promise<GithubRepository[]> {
     try {
+      // Включаем параметры пагинации в ключ кэша
       const cacheKey = `github:repos:${username}`;
 
-      // Try cache first
       const cached = await this.cacheManager.get<GithubRepository[]>(cacheKey);
       if (cached) {
-        this.logger.debug(`Cache hit for ${username}`, {
-          cacheKey,
-          itemsCount: cached.length,
-          username,
-        });
         this.logCacheStatus('hit', username, cached);
         return cached;
       }
 
-      this.logCacheStatus('miss', username);
+      // Проверяем существование пользователя и получаем репозитории за один запрос
+      const repos = await this.fetchUserRepositories(username);
 
-      // Check if user exists
-      const userResponse = await fetch(
-        `${this.githubApiUrl}/users/${username}`,
-        { headers: this.getHeaders() },
-      );
-
-      if (!userResponse.ok) {
-        if (userResponse.status === 404) {
-          this.logger.warn(`User ${username} not found`);
-          throw new HttpException(
-            `GitHub user '${username}' not found`,
-            HttpStatus.NOT_FOUND,
-          );
-        }
-        throw new HttpException(
-          `GitHub API error: ${userResponse.statusText}`,
-          userResponse.status,
-        );
-      }
-
-      // Fetch repositories
-      this.logger.debug(`Cache miss for ${username}, fetching from GitHub API`);
-      const reposResponse = await fetch(
-        `${this.githubApiUrl}/users/${username}/repos`,
-        { headers: this.getHeaders() },
-      );
-
-      // Log rate limits
-      const rateLimit = {
-        limit: reposResponse.headers.get('x-ratelimit-limit'),
-        remaining: reposResponse.headers.get('x-ratelimit-remaining'),
-        reset: new Date(
-          parseInt(reposResponse.headers.get('x-ratelimit-reset') || '0') *
-            1000,
-        ).toISOString(),
-        username,
-        hasToken: !!this.githubToken,
-      };
-      this.logger.log('GitHub API Rate Limits:', rateLimit);
-
-      if (!reposResponse.ok) {
-        throw new HttpException(
-          `Failed to fetch repositories: ${reposResponse.statusText}`,
-          reposResponse.status,
-        );
-      }
-
-      const repos = (await reposResponse.json()) as GithubRepository[];
-
-      // Cache successful response
+      // Кэшируем полный результат
       await this.cacheManager.set(cacheKey, repos, this.cacheTTL);
-      this.logger.debug(`Cached ${repos.length} repositories for ${username}`);
+      this.logCacheStatus('miss', username, repos);
 
       return repos;
     } catch (error) {
       this.logger.error(`Error processing request for ${username}:`, error);
       throw error;
     }
+  }
+
+  private async fetchUserRepositories(
+    username: string,
+  ): Promise<GithubRepository[]> {
+    const userReposUrl = `${this.githubApiUrl}/users/${username}/repos?per_page=100`;
+    const response = await fetch(userReposUrl, { headers: this.getHeaders() });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new HttpException(
+          `GitHub user '${username}' not found`,
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      throw new HttpException(
+        `GitHub API error: ${response.statusText}`,
+        response.status,
+      );
+    }
+
+    this.logRateLimits(response.headers);
+    return response.json() as Promise<GithubRepository[]>;
+  }
+
+  private logRateLimits(headers: Headers) {
+    const rateLimit = {
+      limit: headers.get('x-ratelimit-limit'),
+      remaining: headers.get('x-ratelimit-remaining'),
+      reset: new Date(
+        parseInt(headers.get('x-ratelimit-reset') || '0') * 1000,
+      ).toISOString(),
+    };
+    this.logger.log('GitHub API Rate Limits:', rateLimit);
   }
 }
