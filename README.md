@@ -149,6 +149,7 @@ graph TB
         NextAPI[Next.js API Routes]
         Pages[Pages & Components]
         State[Zustand State]
+        Debouncer[Debouncer]
     end
 
     subgraph "Backend (NestJS)"
@@ -167,7 +168,8 @@ graph TB
     Client -->|Request| Pages
     Pages -->|State Management| State
     Pages -->|API Call| NextAPI
-    NextAPI -->|Proxy Request| NestApp
+    Pages -->|Debounce| Debouncer
+    Debouncer -->|Proxy Request| NestApp
     NestApp -->|Route| Controllers
     Controllers -->|Business Logic| Services
     Services -->|Rate Check| Guards
@@ -180,3 +182,48 @@ graph TB
     style PostgreSQL fill:#99ff99,stroke:#333,stroke-width:2px
     style GitHub fill:#9999ff,stroke:#333,stroke-width:2px
 ```
+
+## Additional Features
+
+### Request Management
+- Frontend request debouncing (500ms window)
+- Automatic request batching and throttling
+- Intelligent request queuing
+- Request deduplication with SWR
+- Smart retry strategy for failed requests
+
+### Enhanced Rate Limiting
+- Redis-based distributed rate limiting
+- Configurable rate limit settings via environment variables
+- Automatic rate limit handling with proper HTTP 429 responses
+- Rate limit information in response headers
+
+### Caching System
+- Redis-based caching for GitHub API responses
+- Configurable cache TTL (5 minutes by default)
+- Detailed cache status logging
+- Cache hit/miss metrics
+
+### Performance Optimizations
+- Request debouncing (500ms) to prevent API flooding
+- SWR for frontend data caching and revalidation
+- Automatic request deduplication
+- Optimistic UI updates
+
+### Error Handling
+- Detailed error messages for different scenarios
+- GitHub API error translation to user-friendly messages
+- Rate limit exceeded notifications
+- Network error handling
+
+### Monitoring and Logging
+- Detailed cache status monitoring
+- GitHub API rate limit tracking
+- Request/response logging
+- Error tracking with context
+
+### Security Features
+- GitHub token support for increased rate limits
+- Environment-based configuration
+- Secure header handling
+- CORS protection
