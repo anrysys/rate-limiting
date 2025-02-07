@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
 import { Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { GithubRepository } from '../interfaces/github-repository.interface';
 
 @Injectable()
 export class GithubService {
@@ -19,12 +20,12 @@ export class GithubService {
       'https://api.github.com';
     this.logger.log(`Initialized with GitHub API URL: ${this.githubApiUrl}`);
   }
-
-  async getUserRepositories(username: string) {
+  async getUserRepositories(username: string): Promise<GithubRepository[]> {
     try {
       // Try to get from cache first
       const cacheKey = `github:repos:${username}`;
-      const cachedData = await this.cacheManager.get(cacheKey);
+      const cachedData =
+        await this.cacheManager.get<GithubRepository[]>(cacheKey);
 
       if (cachedData) {
         this.logger.debug(`Cache hit for ${username}'s repositories`);
@@ -56,12 +57,12 @@ export class GithubService {
           response.status,
         );
       }
-
-      const data = await response.json();
+      const data = (await response.json()) as GithubRepository[];
 
       // Cache the successful response
       await this.cacheManager.set(cacheKey, data, this.cacheTTL);
 
+      return data;
       return data;
     } catch (error) {
       this.logger.error('Error fetching GitHub repositories:', error);
