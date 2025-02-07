@@ -90,7 +90,7 @@ If time permits, add simple unit tests for critical parts of your backend (e.g.,
 
 ```bash
 # Clone repository
-git clone https://github.com/anrysys/rate-limiting.git
+git clone https://github.com/username/rate-limiting.git
 
 # Enter project directory  
 cd rate-limiting
@@ -133,7 +133,7 @@ npm run dev:up
 
 - Frontend: http://localhost:3111
 - Backend: http://localhost:5111
-- API Documentation: http://localhost:5111/api/docs (Swagger) coming soon ...
+- API Documentation: http://localhost:5111/api/docs (Sw
 
 ### Hot Reload
 
