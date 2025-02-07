@@ -133,7 +133,7 @@ npm run dev:up
 
 - Frontend: http://localhost:3111
 - Backend: http://localhost:5111
-- API Documentation: http://localhost:5111/api/docs (Sw
+- API Documentation: http://localhost:5111/api/docs (Swagger UI for API) comming soon...
 
 ### Hot Reload
 
@@ -174,7 +174,7 @@ graph TB
     Controllers -->|Business Logic| Services
     Services -->|Rate Check| Guards
     Guards -->|Store Limits| Redis
-    Services -->|Data Storage| PostgreSQL
+    Services -->|Data Storage (comming soon...)| PostgreSQL
     Services -->|Fetch Data| GitHub
 
     style Client fill:#f9f,stroke:#333,stroke-width:2px
