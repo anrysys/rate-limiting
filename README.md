@@ -1,6 +1,6 @@
 # GitHub Repository Explorer
 
-![alt text](image.png)
+![alt text](images/github-repo-explorer.png)
 
 ## Overview
 
